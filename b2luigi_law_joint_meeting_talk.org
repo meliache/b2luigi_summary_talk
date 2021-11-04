@@ -1,0 +1,137 @@
+#+TITLE: B2luigi
+#+SUBTITLE: A lightweight Luigi extension for batch submission
+#+DATE: \today
+#+LANGUAGE: en
+#+LATEX_COMPILER: lualatex
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [aspectratio=169, 9pt]
+#+LATEX_HEADER: \usepackage{hepnames, hepparticles}
+#+LATEX_HEADER: \graphicspath{{plots/}{plots/post-selection}}
+#+LATEX_HEADER: \usepackage{emoji}
+#+LATEX_HEADER: \usepackage[english]{babel}
+#+LATEX_HEADER: \newcommand{\afb}{\ensuremath{A_{\mathrm{FB}}}}
+#+LATEX_HEADER: \newcommand{\vcb}{\ensuremath{V_{\mathrm{cb}}}}
+#+BEAMER_HEADER: \usepackage{templates/metropolisbonn}
+#+BEAMER_HEADER: \institute{Physikalisches Institut --- Rheinische Friedrich-Wilhelms-Universität Bonn}
+#+LATEX_HEADER:
+#+COLUMNS: %45ITEM %10BEAMER_env(Env) %10BEAMER_act(Act) %4BEAMER_col(Col) %8BEAMER_opt(Opt)
+#+OPTIONS: H:2 num:nil toc:nil title:t d:nil prop:nil timestamp:nil
+
+* Introduction
+** Introduction — =b2luigi=: bringing batch 2 Luigi!
+- lightweight helper package for Luigi, providing:
+- *Batch submission*
+  - use existing tasks, be able to switch between batch systems
+  - schedule and monitor thousands of parallel jobs
+- *Helpers*
+  - output handling and data management
+  - basf2 helper tasks
+- see [[https://b2luigi.readthedocs.io/en/stable/index.html][b2luigi.readthedocs.io]] for the intro in the official docs that this overview is inspired by
+** Target audience
+- works with python anyway and wants to submit jobs from python
+- comfortable with classes
+- would use Luigi but wish for more convenience for batch submission
+* Batch Submission
+** Batch System workflow
+- write normal luigi/b2luigi task like normal
+#+begin_src python
+  class MyTask(b2luigi.Task):
+      cut_value = b2luigi.IntParameter():
+      input_file = b2luigi.Parameter(hashed=True):
+
+      def run(self):
+      # …
+#+end_src
+- process it locally or on a batch system with ~b2luigi.process(tasks)~
+#+begin_src python
+  import b2luigi
+
+  if __name__ == '__main__':
+      b2luigi.set_setting("batch_system", "htcondor")  # "local" for local submission
+      tasks = [MyTask(cut_value=0.5, input_file=input_file) for input_file in input_files]
+      b2luigi.process(tasks, batch=True, test=False)
+#+end_src
+
+** CLI interface
+- TODO
+
+** Why not use the already created batch tasks?
+- many parallel jobs
+- re-use of tasks
+- flexibility wrt. batch
+
+** Batch System implementation
+ - define interface ~BatchProcess~ (/not/ as ~luigi.Task~) with
+   - ~start_job()~
+   - ~kill_job()~
+   - ~get_job_status() -> JobStatus~
+
+    #+begin_src python
+    class JobStatus(enum.Enum):
+        running = "running"
+        successful = "successful"
+        aborted = "aborted"
+        idle = "idle"
+    #+end_src
+** Settings
+- TODO
+
+* Helpers
+** ~b2luigi.Task~
+- TODO
+** Output Helpers
+- TODO
+** Logging
+- TODO
+** =DispatchableTask=
+- TODO
+** Basf2 Helper Tasks
+- TODO
+** =MergerTask's=
+- TODO
+* Examples
+** Basic Example
+#+begin_src python
+  import b2luigi
+  import random
+
+
+  class MyNumberTask(b2luigi.Task):
+      batch_system = "htcondor"
+      some_parameter = b2luigi.IntParameter()
+
+      def output(self):
+          yield self.add_to_output("output_file.txt")
+
+      def run(self):
+          random_number = random.random()
+
+          with open(self.get_output_file_name("output_file.txt"), "w") as f:
+              f.write(f"{random_number}\n")
+
+
+  if __name__ == "__main__":
+      b2luigi.set_setting("result_dir", "results")
+      b2luigi.process([MyNumberTask(some_parameter=i) for i in range(100)],
+                      workers=200)
+#+end_src
+- TODO
+* B2luigi Development
+** Development status
+- Original author Nils Braun in industry (still reviews PR's sometimes)
+- I am currently the main dev, mostly work on the side on HTCondor and gbasf2/Grid batch support
+- occasional contributions from other users: large overlap between users and devs (intentional)
+- development mostly in batch maintenance
+- b2luigi core is small and pretty stable
+- but still officially in beta-mode, thus no API-guarantees
+** Goals
+** Development practices
+- development happens on github, if you want something add an Issue or fork and PR
+- unittests strongly encouraged
+  - core-functionality well-covered
+  - batch-systems not so (but still WIP)
+- use github actions for CI
+  - pre-commit for style and static syntax checking
+  - run unittests and calculate coverage
+- frequent releases
+- see [[https://b2luigi.readthedocs.io/en/stable/advanced/development.html][development documentation]] for a guide how to contribute

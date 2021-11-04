@@ -1,0 +1,85 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{metropolisbonn}[2020-01-21 Metropolis theme with Uni Bonn
+colors and some other personal tweaks by Michael Eliachevitch]
+
+% use metropolis theme as base
+% see https://github.com/matze/mtheme
+\usetheme{metropolis}
+% some customizations of metropolis theme
+\metroset{numbering=fraction, progressbar=frametitle, block=fill,
+  titleformat=allcaps, sectionpage=none}
+
+\RequirePackage[utf8]{inputenc}
+\RequirePackage{amsmath, amsfonts, amssymb} % Mathesymbole usw.
+
+\RequirePackage{fontspec}
+
+% for starting backup with \appendix
+\RequirePackage{appendixnumberbeamer}
+
+% \RequirePackage[ngerman,english]{babel}
+
+% nicer typography
+\RequirePackage[babel]{microtype}
+
+% for table separators
+\RequirePackage{booktabs}
+
+\RequirePackage{minted}
+\definecolor{code-bg}{HTML}{f8f8f8}
+\setminted{autogobble, python3=true, tabsize=2, fontsize=\scriptsize,
+  breaklines, bgcolor=code-bg}
+\usemintedstyle{friendly}
+
+% for code blocks
+\RequirePackage{listings}
+
+% Define some Bonn colors according to 
+\RequirePackage{templates/bonncolors}
+\setbeamercolor{frametitle}{fg=white, bg=bonn-blue}
+\setbeamercolor{progress bar}{fg=bonn-yellow, bg=bonn-grey}
+\setbeamercolor{normal text}{fg=bonn-text-grey, bg=white}
+\setbeamercolor{alerted text}{fg=bonn-blue}
+
+\institute{Physikalisches Institut --- Rheinische Friedrich-Wilhelms-Universität Bonn}
+
+% \def\featherIconShiftBaseline{0pt}
+% \newcommand\featherActivity{\raisebox{\featherIconShiftBaseline}{\featherFont\char"E900}}
+% \newcommand\featherAirplay{\raisebox{\featherIconShiftBaseline}{\featherFont\char"E901}}
+% \newcommand\featherAlertCircle{\raisebox{\featherIconShiftBaseline}{\featherFont\char"E902}}
+% \newcommand\featherAlertOctagon{\raisebox{\featherIconShiftBaseline}{\featherFont\char"E903}}
+
+\hypersetup{colorlinks=false, allbordercolors=bonn-yellow, pdfborderstyle={/S/U/W 1}}
+\lstset{
+  basicstyle=\scriptsize\ttfamily,
+  keywordstyle=\bfseries\color{bonn-blue},
+  commentstyle=\itshape\color{bonn-grey},
+  identifierstyle=\color{bonn-text-grey},
+  stringstyle=\color{bonn-yellow},
+}
+
+% Add logos to title slide
+\titlegraphic{%
+  \flushright%
+  \vspace{-5mm}
+  \includegraphics[height=10mm]{logos/640px-BMBF_Logo_cut.png}
+  \hspace{1.2mm}
+  \includegraphics[height=10mm]{logos/belle2_fsp_logo.pdf}
+  \hspace{1.2mm}
+  \includegraphics[height=10mm]{logos/belle2-logo.pdf}
+  \hspace{1.2mm}
+  \includegraphics[height=10mm]{logos/UNI_Bonn_Logo_Standard_RZ.eps}
+}
+% Add logos to frametitles
+% adapted from
+% % https://tex.stackexchange.com/questions/27906/positioning-logo-in-the-front-page-as-well-as-slides
+\addtobeamertemplate{frametitle}{}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north east,yshift=1pt] at (current page.north east) {%
+      \includegraphics[height=8mm]{logos/belle2-logo.pdf}
+      \hspace{0.7mm}
+      \includegraphics[height=8mm]{logos/UNI_Bonn_Logo_Invers_web.pdf}};
+  \end{tikzpicture}
+}
+\RequirePackage{siunitx}
+\sisetup{separate-uncertainty=true, abbreviations=true}
