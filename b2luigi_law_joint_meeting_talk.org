@@ -1,6 +1,11 @@
-#+TITLE: B2luigi
-#+SUBTITLE: A lightweight Luigi extension for batch submission
-#+DATE: \today
+:PROPERTIES:
+:ID:       a2b7be6f-9c3e-453c-80cc-9947b0425727
+:END:
+#+TITLE: b2luigi
+#+SUBTITLE: (An introduction for those already familiar with luigi) @@beamer:\\@@Joint meeting: Luigi-based Workflow Management with b2luigi/law
+#+DATE: Thursday 18 November
+#+AUTHOR: Michael Eliachevitch @@latex:\\@@ ([[mailto:meliache@uni-bonn.de][\faEnvelope meliache@uni-bonn.de]], [[https://github.com/meliache][\faGithub meliache]], [[https://twitter.com/elimik31][\faTwitter elimik31]], [[https://www.linkedin.com/in/meliache][\faLinkedinSquare meliache]])
+#+STARTUP: beamer
 #+LANGUAGE: en
 #+LATEX_COMPILER: lualatex
 #+LATEX_CLASS: beamer
@@ -8,57 +13,160 @@
 #+LATEX_HEADER: \usepackage{hepnames, hepparticles}
 #+LATEX_HEADER: \graphicspath{{plots/}{plots/post-selection}}
 #+LATEX_HEADER: \usepackage{emoji}
+#+LATEX_HEADER: \usepackage[scale=4]{ccicons}
 #+LATEX_HEADER: \usepackage[english]{babel}
+#+LATEX_HEADER: \usepackage{fontawesome}
 #+LATEX_HEADER: \newcommand{\afb}{\ensuremath{A_{\mathrm{FB}}}}
+#+LATEX_HEADER: \newcommand{\vcb}{\ensuremath{V_{\mathrm{cb}}}}
 #+LATEX_HEADER: \newcommand{\vcb}{\ensuremath{V_{\mathrm{cb}}}}
 #+BEAMER_HEADER: \usepackage{templates/metropolisbonn}
 #+BEAMER_HEADER: \institute{Physikalisches Institut --- Rheinische Friedrich-Wilhelms-Universität Bonn}
 #+LATEX_HEADER:
 #+COLUMNS: %45ITEM %10BEAMER_env(Env) %10BEAMER_act(Act) %4BEAMER_col(Col) %8BEAMER_opt(Opt)
 #+OPTIONS: H:2 num:nil toc:nil title:t d:nil prop:nil timestamp:nil
-
-* Introduction
+* b2luigi Introduction
 ** Introduction — =b2luigi=: bringing batch 2 Luigi!
-- lightweight helper package for Luigi, providing:
-- *Batch submission*
-  - use existing tasks, be able to switch between batch systems
+- lightweight helper package for =luigi=, that…
+- @@beamer:<2->@@ brings *batch to (2) luigi*
+  - use existing tasks, be able to switch between batch systems\\
+    (LSF, HTCondor,  local, …)
   - schedule and monitor thousands of parallel jobs
-- *Helpers*
-  - output handling and data management
-  - basf2 helper tasks
-- see [[https://b2luigi.readthedocs.io/en/stable/index.html][b2luigi.readthedocs.io]] for the intro in the official docs that this overview is inspired by
-** Target audience
-- works with python anyway and wants to submit jobs from python
-- comfortable with classes
-- would use Luigi but wish for more convenience for batch submission
-* Batch Submission
-** Batch System workflow
-- write normal luigi/b2luigi task like normal
-#+begin_src python
-  class MyTask(b2luigi.Task):
-      cut_value = b2luigi.IntParameter():
-      input_file = b2luigi.Parameter(hashed=True):
+- @@beamer:<3->@@ helps with the *bread and butter* in luigi\\
+  \rightarrow e.g. data management / output handling
+- @@beamer:<4->@@ was originally developed for *Belle II*\\
+  - =basf2= helper tasks
+  - grid-submission via wrapper for Belle II-specific tool =gbasf2=
+- full documentation at [[https://b2luigi.readthedocs.io/en/stable/index.html][b2luigi.readthedocs.io]]
+** History and contributors
+*** History                                                         :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.75
+:END:
+- created in 2018 by [[https://github.com/nils-braun/][Nils Braun]] at KIT for his Belle II tracking studies at the KEKCC LSF
+- users at KIT and Belle II started contributing, e.g.
+  - 2019: [[https://github.com/welschma][Max Welsch]] adds HTCondor batch (inspired by =law=)
+  - 2020: I add LCG support for Belle II via soft =gbasf2= wrapper
+  - …
+- 2021: Nils lefts for industry and I take over as main developer\\
+- currently still in beta (=v0.7.4=), but has several active users within Belle II
+*** The team                                                        :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.25
+:END:
+#+begin_center
+[[https://b2luigi.readthedocs.io/en/stable/#the-team][The team]]
+#+end_center
+#+DOWNLOADED: screenshot @ 2021-11-17 21:57:37
+[[file:b2luigi_Introduction/2021-11-17_21-57-37_screenshot.png]]
 
-      def run(self):
-      # …
-#+end_src
-- process it locally or on a batch system with ~b2luigi.process(tasks)~
+** Target users
+I imagine our users
+#+ATTR_BEAMER: :overlay <+->
+- work with python anyway
+  #+begin_quote
+     "I  write my steering file in python, I want to submit my jobs from python without having to learn some submit file syntax."
+  #+end_quote
+- comfortable with python classes\\
+  (understands inheritance, properties, methods)
+- want to use bare =luigi= but wish for more convenient batch submission\\
+  \rightarrow drop-in replacement: ~import b2luigi as luigi~
+- use =b2luigi= as a *tool* to build their own workflow\\
+  \rightarrow many users use it very differently
+- are potential contributors
+* Batch Submission
+** Why not use the already created batch tasks?
+- [[https://github.com/spotify/luigi/tree/master/luigi/contrib][luigi/contrib]] already contains many batch scheduling and monitoring tasks\\
+  (b2luigi was inspired by [[https://github.com/spotify/luigi/blob/master/luigi/contrib/sge.py][sge]] and [[https://github.com/spotify/luigi/blob/master/luigi/contrib/lsf.py][lsf]] implementations)
+- however, those have some limitations which b2luigi solves:
+  #+ATTR_BEAMER: :overlay <+->
+  - *submit /many/ parallel jobs*
+    - in other batch implementations each job needs a monitoring task, but number of processes is limited on many systems\\
+      \rightarrow b2luigi requires only single process on submitting machine
+  - *re-use tasks*
+  - *flexibility wrt. batch*
+
+
+** Batch System workflow
+- @@beamer:<1->@@ write normal (b2)luigi task
+  #+begin_src python
+    import b2luigi
+
+    @b2luigi.requires(SomeOtherTask, foo_parameter="bar")
+    class MyTask(b2luigi.Task):
+        cut_value = b2luigi.IntParameter():
+        input_file = b2luigi.Parameter(hashed=True):
+
+        def run(self):  # …
+        def output(self):  # …
+  #+end_src
+- @@beamer:<2->@@ use ~b2luigi.process(tasks)~ to run tasks locally or on a batch system
+  #+begin_src python
+    if __name__ == '__main__':
+        b2luigi.set_setting("batch_system", "htcondor")  # "local" for local submission
+        tasks = [MyTask(cut_value=0.5, input_file=input_file) for input_file in input_files]
+        b2luigi.process(tasks, batch=True, test=False)
+  #+end_src
+
+** Command Line Interface
+- ~b2luigi.process()~ adds a CLI interface to your script:
+  #+begin_src bash
+      $ python3 steering_file.py --help
+      usage: htcondor_example.py [-h] [--show-output] [--test] [--batch] [--batch-runner] [--dry-run] [--scheduler-host SCHEDULER_HOST] [--scheduler-port SCHEDULER_PORT] [--task-id TASK_ID]
+
+      optional arguments:
+      -h, --help            show this help message and exit
+      --show-output         Instead of running the tasks, show which output files will/are created.
+      --test                Run the task list in test mode by printing the log directly to the screen
+                              instead of storing it in a file.
+      --batch               Instead of running locally, try to submit the tasks to the batch system.
+      --batch-runner        Expert option to mark this worker as a batch runner.
+      --dry-run             Do not run any task but set the return value to 0, if the tasks are complete.
+      --scheduler-host SCHEDULER_HOST
+                              If given, use this host as a central scheduler instead of a local one.
+      --scheduler-port SCHEDULER_PORT
+                              If given, use the port on this host as a central scheduler instead of a local one.
+      --task-id TASK_ID     EXPERT.
+  #+end_src
+  * select [[https://b2luigi.readthedocs.io/en/stable/documentation/run_modes.html#run-modes][*run-mode*]]: =batch=, =test=, =dry-run= or =show-output=
+  * connect to [[https://b2luigi.readthedocs.io/en/stable/documentation/run_modes.html#start-a-central-scheduler][*central scheduler*]]
+
+** b2luigi Settings
+*** Explanation                                                     :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.4
+:END:
+- provide additional options to b2luigi
+- Can be set via
+  1. via class attributes\\
+     (e.g. static properties, luigi parameters or property functions)
+  2. via ~b2luigi.set_setting(key, value)~
+  3. =settings.json= configuration file
+- [[https://github.com/nils-braun/b2luigi/issues/31][Issue #31]]: support luigi's own config
+*** Example                                                         :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.6
+:END:
+#+BEAMER: \onslide<2->
+#+begin_center
+Example
+#+end_center
 #+begin_src python
-  import b2luigi
+  class RecoTask(b2luigi.DispatchableTask):
+      result_dir = "/path/to/results"
+      batch_system = b2luigi.Parameter(significant=False)
+
+      @propery
+      def htcondor_settings(self):
+          return {"+requestRuntime": int(self.get_nevents() * 0.2)}
 
   if __name__ == '__main__':
-      b2luigi.set_setting("batch_system", "htcondor")  # "local" for local submission
-      tasks = [MyTask(cut_value=0.5, input_file=input_file) for input_file in input_files]
-      b2luigi.process(tasks, batch=True, test=False)
+      b2luigi.set_setting("env_script", "./setup.sh")
+      b2luigi.process(RecoTask(batch_system="htcondor"))
 #+end_src
-
-** CLI interface
-- TODO
-
-** Why not use the already created batch tasks?
-- many parallel jobs
-- re-use of tasks
-- flexibility wrt. batch
+=settings.json=:
+#+begin_src json
+  {"log_dir" : "/path/to/logs"}
+#+end_src
 
 ** Batch System implementation
  - define interface ~BatchProcess~ (/not/ as ~luigi.Task~) with
@@ -73,9 +181,6 @@
         aborted = "aborted"
         idle = "idle"
     #+end_src
-** Settings
-- TODO
-
 * Helpers
 ** ~b2luigi.Task~
 - TODO
@@ -83,8 +188,9 @@
 - TODO
 ** Logging
 - TODO
-** =DispatchableTask=
+** Dispatching
 - TODO
+** Atomic output creation
 ** Basf2 Helper Tasks
 - TODO
 ** =MergerTask's=
@@ -117,14 +223,6 @@
 #+end_src
 - TODO
 * B2luigi Development
-** Development status
-- Original author Nils Braun in industry (still reviews PR's sometimes)
-- I am currently the main dev, mostly work on the side on HTCondor and gbasf2/Grid batch support
-- occasional contributions from other users: large overlap between users and devs (intentional)
-- development mostly in batch maintenance
-- b2luigi core is small and pretty stable
-- but still officially in beta-mode, thus no API-guarantees
-** Goals
 ** Development practices
 - development happens on github, if you want something add an Issue or fork and PR
 - unittests strongly encouraged
@@ -135,3 +233,42 @@
   - run unittests and calculate coverage
 - frequent releases
 - see [[https://b2luigi.readthedocs.io/en/stable/advanced/development.html][development documentation]] for a guide how to contribute
+
+* Transition to example                                         :B_fullframe:
+:PROPERTIES:
+:BEAMER_env: fullframe
+:END:
+#+begin_center
+#+LATEX: \Huge
+Thanks for listening.
+
+It's time for live action!
+#+end_center
+* Appendix begin                                            :B_ignoreheading:
+:PROPERTIES:
+:BEAMER_env: ignoreheading
+:END:
+\appendix
+* CC License                                                    :B_fullframe:
+:PROPERTIES:
+:BEAMER_env: fullframe
+:END:
+#+begin_center
+#+LATEX: \LARGE
+Except where otherwise noted, this work is licensed under
+
+https://creativecommons.org/licenses/by-sa/4.0
+
+\ccbysa
+#+end_center
+
+* Backup begin                                                  :B_fullframe:
+:PROPERTIES:
+:BEAMER_env: fullframe
+:END:
+#+begin_center
+#+LATEX: \Huge
+Backup
+#+end_center
+
+* Footnotes
