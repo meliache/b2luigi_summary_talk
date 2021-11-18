@@ -1,8 +1,8 @@
 :PROPERTIES:
 :ID:       a2b7be6f-9c3e-453c-80cc-9947b0425727
 :END:
-#+TITLE: b2luigi
-#+SUBTITLE: (An introduction for those already familiar with luigi) @@beamer:\\@@Joint meeting: Luigi-based Workflow Management with b2luigi/law
+#+TITLE: b2luigi introduction
+#+SUBTITLE: (For those already familiar with luigi) @@beamer:\\@@Joint meeting: Luigi-based Workflow Management with b2luigi/law
 #+DATE: Thursday 18 November
 #+AUTHOR: Michael Eliachevitch @@latex:\\@@ ([[mailto:meliache@uni-bonn.de][\faEnvelope meliache@uni-bonn.de]], [[https://github.com/meliache][\faGithub meliache]], [[https://twitter.com/elimik31][\faTwitter elimik31]], [[https://www.linkedin.com/in/meliache][\faLinkedinSquare meliache]])
 #+STARTUP: beamer
@@ -10,15 +10,10 @@
 #+LATEX_COMPILER: lualatex
 #+LATEX_CLASS: beamer
 #+LATEX_CLASS_OPTIONS: [aspectratio=169, 9pt]
-#+LATEX_HEADER: \usepackage{hepnames, hepparticles}
-#+LATEX_HEADER: \graphicspath{{plots/}{plots/post-selection}}
 #+LATEX_HEADER: \usepackage{emoji}
 #+LATEX_HEADER: \usepackage[scale=4]{ccicons}
 #+LATEX_HEADER: \usepackage[english]{babel}
 #+LATEX_HEADER: \usepackage{fontawesome}
-#+LATEX_HEADER: \newcommand{\afb}{\ensuremath{A_{\mathrm{FB}}}}
-#+LATEX_HEADER: \newcommand{\vcb}{\ensuremath{V_{\mathrm{cb}}}}
-#+LATEX_HEADER: \newcommand{\vcb}{\ensuremath{V_{\mathrm{cb}}}}
 #+BEAMER_HEADER: \usepackage{templates/metropolisbonn}
 #+BEAMER_HEADER: \institute{Physikalisches Institut --- Rheinische Friedrich-Wilhelms-Universität Bonn}
 #+LATEX_HEADER:
@@ -26,17 +21,17 @@
 #+OPTIONS: H:2 num:nil toc:nil title:t d:nil prop:nil timestamp:nil
 * b2luigi Introduction
 ** Introduction — =b2luigi=: bringing batch 2 Luigi!
+- full documentation at [[https://b2luigi.readthedocs.io/en/stable/index.html][b2luigi.readthedocs.io]]
 - lightweight helper package for =luigi=, that…
 - @@beamer:<2->@@ brings *batch to (2) luigi*
   - use existing tasks, be able to switch between batch systems\\
     (LSF, HTCondor,  local, …)
   - schedule and monitor thousands of parallel jobs
-- @@beamer:<3->@@ helps with the *bread and butter* in luigi\\
+- @@beamer:<3->@@ helps with the *bread \emoji{bread} and butter \emoji{butter}* in luigi\\
   \rightarrow e.g. data management / output handling
 - @@beamer:<4->@@ was originally developed for *Belle II*\\
-  - =basf2= helper tasks
+  - collection of =basf2= helper tasks
   - grid-submission via wrapper for Belle II-specific tool =gbasf2=
-- full documentation at [[https://b2luigi.readthedocs.io/en/stable/index.html][b2luigi.readthedocs.io]]
 ** History and contributors
 *** History                                                         :BMCOL:
 :PROPERTIES:
@@ -49,12 +44,12 @@
   - …
 - 2021: Nils lefts for industry and I take over as main developer\\
 - currently still in beta (=v0.7.4=), but has several active users within Belle II
-*** The team                                                        :BMCOL:
+*** The team                                                       :BMCOL:
 :PROPERTIES:
 :BEAMER_col: 0.25
 :END:
 #+begin_center
-[[https://b2luigi.readthedocs.io/en/stable/#the-team][The team]]
+[[https://b2luigi.readthedocs.io/en/stable/#the-team][The team]] \emoji{people-holding-hands}
 #+end_center
 #+DOWNLOADED: screenshot @ 2021-11-17 21:57:37
 [[file:b2luigi_Introduction/2021-11-17_21-57-37_screenshot.png]]
@@ -77,15 +72,15 @@ I imagine our users
 ** Why not use the already created batch tasks?
 - [[https://github.com/spotify/luigi/tree/master/luigi/contrib][luigi/contrib]] already contains many batch scheduling and monitoring tasks\\
   (b2luigi was inspired by [[https://github.com/spotify/luigi/blob/master/luigi/contrib/sge.py][sge]] and [[https://github.com/spotify/luigi/blob/master/luigi/contrib/lsf.py][lsf]] implementations)
-- however, those have some limitations which b2luigi solves:
+- b2luigi solves some [[https://b2luigi.readthedocs.io/en/stable/#why-not-use-the-already-created-batch-tasks][limitation]]s of those systems, the improvements are:
   #+ATTR_BEAMER: :overlay <+->
-  - *submit /many/ parallel jobs*
-    - in other batch implementations each job needs a monitoring task, but number of processes is limited on many systems\\
+  - *submit /many/ parallel jobs*\\
+    in other batch implementations each job needs a monitoring task, but number of processes is limited on many systems\\
       \rightarrow b2luigi requires only single process on submitting machine
-  - *re-use tasks*
-  - *flexibility wrt. batch*
-
-
+  - *batch-submit a large set of luigi tasks*\\
+    in other implementation you often need to implement a ~work()~ function instead of ~run()~ or define an external command to run
+  - *flexibility in choosing a batch systems*\\
+    \rightarrow you can write your task first, test locally and then choose or change the batch you process them on
 ** Batch System workflow
 - @@beamer:<1->@@ write normal (b2)luigi task
   #+begin_src python
@@ -104,7 +99,7 @@ I imagine our users
     if __name__ == '__main__':
         b2luigi.set_setting("batch_system", "htcondor")  # "local" for local submission
         tasks = [MyTask(cut_value=0.5, input_file=input_file) for input_file in input_files]
-        b2luigi.process(tasks, batch=True, test=False)
+        b2luigi.process(tasks, batch=True)
   #+end_src
 
 ** Command Line Interface
@@ -141,7 +136,7 @@ I imagine our users
      (e.g. static properties, luigi parameters or property functions)
   2. via ~b2luigi.set_setting(key, value)~
   3. =settings.json= configuration file
-- [[https://github.com/nils-braun/b2luigi/issues/31][Issue #31]]: support luigi's own config
+- [[https://github.com/nils-braun/b2luigi/issues/31][\faGithub{} issue #31]]: /Support luigi's own config/
 *** Example                                                         :BMCOL:
 :PROPERTIES:
 :BEAMER_col: 0.6
@@ -168,73 +163,112 @@ Example
   {"log_dir" : "/path/to/logs"}
 #+end_src
 
-** Batch System implementation
+** Add a new batch system
  - define interface ~BatchProcess~ (/not/ as ~luigi.Task~) with
    - ~start_job()~
    - ~kill_job()~
    - ~get_job_status() -> JobStatus~
-
     #+begin_src python
-    class JobStatus(enum.Enum):
-        running = "running"
-        successful = "successful"
-        aborted = "aborted"
-        idle = "idle"
+      class JobStatus(enum.Enum):
+          running = "running"
+          successful = "successful"
+          aborted = "aborted"
+          idle = "idle"
     #+end_src
-* Helpers
-** ~b2luigi.Task~
-- TODO
-** Output Helpers
-- TODO
-** Logging
-- TODO
-** Dispatching
-- TODO
-** Atomic output creation
-** Basf2 Helper Tasks
-- TODO
-** =MergerTask's=
-- TODO
-* Examples
-** Basic Example
+ - [[https://github.com/nils-braun/b2luigi/issues/2][\faGithub{} issue #2]]: /Include new batch systems./\\
+   Contributions welcome!
+
+* Data Management Helper
+** Super-hero task classes
+~b2luigi.Task~ is a supercharged version of ~luigi.Task~
+**** Col1                                                          :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
+- methods to help with *data management*
+  - @@beamer:<2->@@ helps you organize your outputs with the structure\\
+    #+begin_src bash
+    <result_dir>/param1=foo/param2=bar/…/filename
+    #+end_src
+  - @@beamer:<3->@@ ~self.add_to_output("<filename>")~\\
+    - yield this ~self.output()~ generate a ~luigi.LocalTarget~ with a path under ~result_dir~ that encodes the values of the luigi parameter.
+  - @@beamer:<4->@@ ~self.get_output_file_name("<filename>")~:
+    - use this in other methods like ~run()~ to get the generated file path.
+**** Col2                                                          :BMCOL:
+:PROPERTIES:
+:BEAMER_col: 0.5
+:END:
 #+begin_src python
-  import b2luigi
-  import random
+    import b2luigi
+    import random
 
+    class MyNumberTask(b2luigi.Task):
+        random_seed = b2luigi.IntParameter()
 
-  class MyNumberTask(b2luigi.Task):
-      batch_system = "htcondor"
-      some_parameter = b2luigi.IntParameter()
+        def output(self):
+            # ./random_seed=<seed>/output_file.txt
+            yield self.add_to_output("output_file.txt")
 
-      def output(self):
-          yield self.add_to_output("output_file.txt")
-
-      def run(self):
-          random_number = random.random()
-
-          with open(self.get_output_file_name("output_file.txt"), "w") as f:
-              f.write(f"{random_number}\n")
-
-
-  if __name__ == "__main__":
-      b2luigi.set_setting("result_dir", "results")
-      b2luigi.process([MyNumberTask(some_parameter=i) for i in range(100)],
-                      workers=200)
+        def run(self):
+            random.seed(self.random_seed)
+            random_number = random.random()
+            # ./random_seed=<seed>/output_file.txt
+            out_path = self.get_output_file_name(
+                "output_file.txt"
+            )
+            with open(out_path, "w") as f:
+                f.write(f"{random_number}\n")
 #+end_src
-- TODO
+** Dispatching
+- *Problem:* Many HEP-tasks are steering-files that run *unsafe C++* framework code that can crash (=segfault=) and stop all tasks from running\pause
+- *Solution*: /Dispatchable tasks/ that emulate batch submission on local computer and runs it in separate execution path
+  - decorate your ~run()~ method with ~@b2luigi.dispatch~
+  - or inherit from ~b2luigi.DispatchableTask~ and implement ~process()~ method instead of ~run()~ \\
+    (this is what ~Basf2Task~ and its implementations do)
+
+** Atomic output creation
+- *Problem:* Long-running tasks often create output before filling it.\\
+  \rightarrow If task fails during execution, but the output is already created, it's mistakenly marked as /complete/ ([[https://www.arashrouhani.com/luigi-budapest-bi-oct-2015/#/21]["thanksgiving bug"]])\pause
+- *Solution*: use ~@b2luigi.on_temporary_files~ decorator, e.g. for ~run()~ or ~process()~\\
+  \rightarrow Modifies ~get_output_file_name()~ to return temporary file location, to which output is written first. After the decorated function was successful, the output is moved to the actual output location.
 * B2luigi Development
 ** Development practices
 - development happens on github, if you want something add an Issue or fork and PR
-- unittests strongly encouraged
+- unit tests encouraged
   - core-functionality well-covered
   - batch-systems not so (but still WIP)
-- use github actions for CI
+- github actions for CI
   - pre-commit for style and static syntax checking
   - run unittests and calculate coverage
-- frequent releases
 - see [[https://b2luigi.readthedocs.io/en/stable/advanced/development.html][development documentation]] for a guide how to contribute
+* Examples
+# ** Basic Example
+# #+begin_src python
+#   import b2luigi
+#   import random
 
-* Transition to example                                         :B_fullframe:
+
+#   class MyNumberTask(b2luigi.Task):
+#       batch_system = "htcondor"
+#       some_parameter = b2luigi.IntParameter()
+
+#       def output(self):
+#           yield self.add_to_output("output_file.txt")
+
+#       def run(self):
+#           random_number = random.random()
+
+#           with open(self.get_output_file_name("output_file.txt"), "w") as f:
+#               f.write(f"{random_number}\n")
+
+
+#   if __name__ == "__main__":
+#       b2luigi.set_setting("result_dir", "results")
+#       b2luigi.process([MyNumberTask(some_parameter=i) for i in range(100)],
+#                       workers=200)
+# #+end_src
+# - TODO
+** Transition to example                                       :B_fullframe:
 :PROPERTIES:
 :BEAMER_env: fullframe
 :END:
@@ -249,7 +283,7 @@ It's time for live action!
 :BEAMER_env: ignoreheading
 :END:
 \appendix
-* CC License                                                    :B_fullframe:
+** CC License                                                  :B_fullframe:
 :PROPERTIES:
 :BEAMER_env: fullframe
 :END:
@@ -262,7 +296,7 @@ https://creativecommons.org/licenses/by-sa/4.0
 \ccbysa
 #+end_center
 
-* Backup begin                                                  :B_fullframe:
+** Backup begin                                                :B_fullframe:
 :PROPERTIES:
 :BEAMER_env: fullframe
 :END:
@@ -270,5 +304,3 @@ https://creativecommons.org/licenses/by-sa/4.0
 #+LATEX: \Huge
 Backup
 #+end_center
-
-* Footnotes
