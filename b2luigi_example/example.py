@@ -1,7 +1,5 @@
 import b2luigi
 import random
-import os
-from time import sleep
 
 
 class MyNumberTask(b2luigi.Task):
@@ -21,15 +19,10 @@ class MyNumberTask(b2luigi.Task):
 
     def run(self):
         print("I am now starting a task")
-        sleep(10)
         random.seed(self.random_seed)
         random_number = random.random()
 
-        output_path = self.get_output_file_name("output_file.txt")
-        outdir = os.path.realpath(os.path.join(output_path, os.pardir))
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-        with open(output_path, "w") as f:
+        with open(self.get_output_file_name("output_file.txt"), "w") as f:
             f.write(f"{random_number}\n")
 
 
@@ -61,11 +54,7 @@ class MyAverageTask(b2luigi.WrapperTask):
 
         average = summed_numbers / counter
 
-        output_path = self.get_output_file_name("average.txt")
-        outdir = os.path.realpath(os.path.join(output_path, os.pardir))
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-        with open(output_path, "w") as f:
+        with open(self.get_output_file_name("average.txt"), "w") as f:
             f.write(f"{average}\n")
 
 
